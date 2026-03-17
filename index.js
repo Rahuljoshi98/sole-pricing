@@ -7,7 +7,7 @@
   "use strict";
 
   /* ---- Config ---- */
-  const API_BASE = "http://localhost:3001/api";
+  const API_BASE = "https://appn.soleapp.com.au/api";
   const SIGNUP_URL = "https://fdev.soleapp.com.au/login";
 
   /* ---- Static data ---- */
@@ -519,10 +519,7 @@
 
     els.addonsWrapper.style.display = hasSelectedPlan ? "grid" : "none";
     els.addonsRight.style.display = state.showCalculation ? "flex" : "none";
-    els.addonsWrapper.classList.toggle(
-      "split",
-      state.showCalculation,
-    );
+    els.addonsWrapper.classList.toggle("split", state.showCalculation);
   }
 
   /* ---- Update total price display ---- */

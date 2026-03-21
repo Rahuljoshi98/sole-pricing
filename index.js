@@ -8,7 +8,7 @@
 
   /* ---- Config ---- */
   const API_BASE = "https://appn.soleapp.com.au/api";
-  const SIGNUP_URL = "https://fdev.soleapp.com.au/login";
+  const SIGNUP_URL = "https://webapp.soleapp.com.au/login";
 
   /* ---- Static data ---- */
   const industries = [

@@ -3,9 +3,7 @@
    Fonts: Plus Jakarta Sans, DM Sans
    ========================================= */
 
-.pricing-wrapper *,
-.pricing-wrapper *::before,
-.pricing-wrapper *::after {
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;

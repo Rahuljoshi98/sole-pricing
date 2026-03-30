@@ -1,94 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pricing</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-
-  <div class="pricing-wrapper" id="new-pricing">
-
-    <!-- Header -->
-    <p class="section-label">Pricing</p>
-    <div class="section-header">
-      <p class="section-title">Simple pricing, built for you.</p>
-      <p class="section-subtitle">Search for your industry to find your recommended setup.</p>
-    </div>
-
-    <!-- Search -->
-    <div class="search-container">
-      <div class="search-input-wrap">
-        <input
-          type="text"
-          id="industry-search"
-          placeholder="Search 50 industries (e.g. Tradie, NDIS, Creative)..."
-          class="search-input"
-          autocomplete="off"
-        />
-      </div>
-    </div>
-
-    <!-- Industry Chips -->
-    <div class="chips-container" id="chips-container"></div>
-
-    <!-- Billing Toggle -->
-    <div class="billing-toggle-wrap">
-      <div class="billing-toggle">
-        <button class="billing-btn active" data-billing="monthly">Monthly</button>
-        <button class="billing-btn" data-billing="annual">
-          Annually
-          <span class="billing-discount">-20%</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Pricing Plans -->
-    <div class="plans-grid" id="plans-grid">
-      <!-- Skeleton cards shown while API loads -->
-      <div class="plan-card skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w50"></div><div class="skeleton-line w70"></div></div>
-      <div class="plan-card skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w50"></div><div class="skeleton-line w70"></div></div>
-      <div class="plan-card skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w50"></div><div class="skeleton-line w70"></div></div>
-    </div>
-
-    <!-- Add-Ons + Calculation -->
-    <div class="addons-wrapper" id="addons-wrapper" style="display:none;">
-      <!-- Left: Add-Ons -->
-      <div class="addons-left">
-        <p class="addons-title">Add-Ons</p>
-        <div class="addons-info-banner">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <p>Select Package first</p>
-        </div>
-        <div class="addons-list" id="addons-list">
-          <!-- Skeleton addon rows -->
-          <div class="addon-card skeleton-card"><div class="skeleton-line w50"></div><div class="skeleton-line w80"></div></div>
-          <div class="addon-card skeleton-card"><div class="skeleton-line w50"></div><div class="skeleton-line w80"></div></div>
-          <div class="addon-card skeleton-card"><div class="skeleton-line w50"></div><div class="skeleton-line w80"></div></div>
-          <div class="addon-card skeleton-card"><div class="skeleton-line w50"></div><div class="skeleton-line w80"></div></div>
-        </div>
-      </div>
-
-      <!-- Right: Calculation Result -->
-      <div class="addons-right" id="addons-right" style="display:none;">
-        <p class="total-price" id="total-price">
-          $0.00<span class="per-month">/month</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pricing</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="pricing-wrapper" id="new-pricing">
+      <!-- Header -->
+      <p class="section-label">Pricing</p>
+      <div class="section-header">
+        <p class="section-title">Simple pricing, built for you.</p>
+        <p class="section-subtitle">
+          Search for your industry to find your recommended setup.
         </p>
-        <a id="trial-btn" class="trial-btn" href="https://fdev.soleapp.com.au/login">Free full 30 day trial</a>
-        <div class="trust-badges">
-          <span>No credit card required</span>
-          <span>Instant access</span>
-          <span>Secure checkout</span>
+      </div>
+
+      <!-- Search -->
+      <div class="search-container">
+        <div class="search-input-wrap">
+          <input
+            type="text"
+            id="industry-search"
+            placeholder="Search 50 industries (e.g. Tradie, NDIS, Creative)..."
+            class="search-input"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <!-- Industry Chips -->
+      <div class="chips-container" id="chips-container"></div>
+
+      <!-- Billing Toggle -->
+      <div class="billing-toggle-wrap">
+        <div class="billing-toggle">
+          <button class="billing-btn active" data-billing="monthly">
+            Monthly
+          </button>
+          <button class="billing-btn" data-billing="annual">
+            Annually
+            <span class="billing-discount">-20%</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pricing Plans -->
+      <div class="plans-grid" id="plans-grid">
+        <!-- Skeleton cards shown while API loads -->
+        <div class="plan-card skeleton-card">
+          <div class="skeleton-line w60"></div>
+          <div class="skeleton-line w40"></div>
+          <div class="skeleton-line w80"></div>
+          <div class="skeleton-line w50"></div>
+          <div class="skeleton-line w70"></div>
+        </div>
+        <div class="plan-card skeleton-card">
+          <div class="skeleton-line w60"></div>
+          <div class="skeleton-line w40"></div>
+          <div class="skeleton-line w80"></div>
+          <div class="skeleton-line w50"></div>
+          <div class="skeleton-line w70"></div>
+        </div>
+        <div class="plan-card skeleton-card">
+          <div class="skeleton-line w60"></div>
+          <div class="skeleton-line w40"></div>
+          <div class="skeleton-line w80"></div>
+          <div class="skeleton-line w50"></div>
+          <div class="skeleton-line w70"></div>
+        </div>
+      </div>
+
+      <!-- Add-Ons + Calculation -->
+      <div class="addons-wrapper" id="addons-wrapper" style="display: none">
+        <!-- Left: Add-Ons -->
+        <div class="addons-left">
+          <p class="addons-title">Add-Ons</p>
+          <div class="addons-info-banner">
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p>Select Package first</p>
+          </div>
+          <div class="addons-list" id="addons-list">
+            <!-- Skeleton addon rows -->
+            <div class="addon-card skeleton-card">
+              <div class="skeleton-line w50"></div>
+              <div class="skeleton-line w80"></div>
+            </div>
+            <div class="addon-card skeleton-card">
+              <div class="skeleton-line w50"></div>
+              <div class="skeleton-line w80"></div>
+            </div>
+            <div class="addon-card skeleton-card">
+              <div class="skeleton-line w50"></div>
+              <div class="skeleton-line w80"></div>
+            </div>
+            <div class="addon-card skeleton-card">
+              <div class="skeleton-line w50"></div>
+              <div class="skeleton-line w80"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Calculation Result -->
+        <div class="addons-right" id="addons-right" style="display: none">
+          <p class="total-price" id="total-price">
+            $0.00<span class="per-month">/month</span>
+          </p>
+          <a
+            id="trial-btn"
+            class="trial-btn"
+            href="https://fdev.soleapp.com.au/login"
+            >Free full 30 day trial</a
+          >
+          <div class="trust-badges">
+            <span>No credit card required</span>
+            <span>Instant access</span>
+            <span>Secure checkout</span>
+          </div>
         </div>
       </div>
     </div>
+    <!-- end #new-pricing -->
 
-  </div><!-- end #new-pricing -->
-
-  <script src="./index.js" ></script>
-</body>
+    <script src="./index.js"></script>
+  </body>
 </html>

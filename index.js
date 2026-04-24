@@ -450,8 +450,8 @@
 
   /* ---- State ---- */
   const state = {
-    // Default selection: Free (if available from API)
-    selectedPlan: "free",
+    // Default selection: Business (if available from API)
+    selectedPlan: "business",
     selectedAddOns: new Set(),
     billing: "monthly",
     search: "",
@@ -741,8 +741,15 @@
 
     const hasSelected = state.packages.some((p) => p.slug === state.selectedPlan);
     if (!hasSelected) {
+      const business =
+        state.packages.find((p) => p.slug === "business") ||
+        state.packages.find((p) => /business/i.test(p.name || ""));
       const free = state.packages.find((p) => p.slug === "free");
-      state.selectedPlan = free ? "free" : state.packages[0].slug;
+      state.selectedPlan = business
+        ? business.slug
+        : free
+          ? "free"
+          : state.packages[0].slug;
     }
 
     applySelectedPlanSideEffects(state.selectedPlan);

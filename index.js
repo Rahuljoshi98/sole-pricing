@@ -450,11 +450,12 @@
 
   /* ---- State ---- */
   const state = {
-    selectedPlan: "",
+    // Default selection: Free (if available from API)
+    selectedPlan: "free",
     selectedAddOns: new Set(),
     billing: "monthly",
     search: "",
-    selectedIndustries: new Set(),
+    selectedIndustry: "",
     showAll: false,
     showCalculation: false,
     // Populated from API
@@ -684,7 +685,7 @@
 
     const html = visible
       .map(({ label }) => {
-        const selected = state.selectedIndustries.has(label);
+        const selected = state.selectedIndustry === label;
         return `<button
         class="chip${selected ? " selected" : ""}"
         data-industry="${label}"
@@ -703,11 +704,8 @@
     els.chipsContainer.querySelectorAll(".chip").forEach((btn) => {
       btn.addEventListener("click", () => {
         const industry = btn.dataset.industry;
-        if (state.selectedIndustries.has(industry)) {
-          state.selectedIndustries.delete(industry);
-        } else {
-          state.selectedIndustries.add(industry);
-        }
+        state.selectedIndustry =
+          state.selectedIndustry === industry ? "" : industry;
         renderChips();
       });
     });
@@ -719,6 +717,35 @@
         renderChips();
       });
     }
+  }
+
+  function applySelectedPlanSideEffects(planSlug) {
+    if (planSlug === "free") {
+      state.selectedAddOns.clear();
+      return;
+    }
+    if (planSlug === "bundle") {
+      state.selectedAddOns.clear();
+      state.addons.forEach((a) => {
+        if (a.slug !== "accounting" && !a.comingSoon) {
+          state.selectedAddOns.add(a.slug);
+        }
+      });
+      return;
+    }
+    state.selectedAddOns.clear();
+  }
+
+  function ensureDefaultSelectedPlan() {
+    if (!state.packages.length) return;
+
+    const hasSelected = state.packages.some((p) => p.slug === state.selectedPlan);
+    if (!hasSelected) {
+      const free = state.packages.find((p) => p.slug === "free");
+      state.selectedPlan = free ? "free" : state.packages[0].slug;
+    }
+
+    applySelectedPlanSideEffects(state.selectedPlan);
   }
 
   /* ---- Render: Pricing Plans ---- */
@@ -785,18 +812,7 @@
         const newPlan = card.dataset.plan;
         if (state.selectedPlan !== newPlan) {
           state.selectedPlan = newPlan;
-          if (newPlan === "free") {
-            state.selectedAddOns.clear();
-          } else if (newPlan === "bundle") {
-            state.selectedAddOns.clear();
-            state.addons.forEach((a) => {
-              if (a.slug !== "accounting" && !a.comingSoon) {
-                state.selectedAddOns.add(a.slug);
-              }
-            });
-          } else {
-            state.selectedAddOns.clear();
-          }
+          applySelectedPlanSideEffects(newPlan);
           renderAddons();
         }
         checkShowCalculation();
@@ -944,6 +960,14 @@
     els.addonsWrapper.style.display = hasSelectedPlan ? "grid" : "none";
     els.addonsRight.style.display = state.showCalculation ? "flex" : "none";
     els.addonsWrapper.classList.toggle("split", state.showCalculation);
+
+    const infoText = document.querySelector(".addons-info-banner p");
+    if (infoText) {
+      infoText.textContent =
+        state.selectedPlan === "free"
+          ? "Add-ons are available on paid plans"
+          : "Select add-ons";
+    }
   }
 
   /* ---- Update total price display ---- */
@@ -989,9 +1013,11 @@
     initBillingToggle();
     initSearch();
     await fetchPlans();
+    ensureDefaultSelectedPlan();
     renderPlans();
     renderAddons();
     checkShowCalculation();
+    updateTotal();
   }
 
   if (document.readyState === "loading") {

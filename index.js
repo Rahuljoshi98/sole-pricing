@@ -704,9 +704,19 @@
     els.chipsContainer.querySelectorAll(".chip").forEach((btn) => {
       btn.addEventListener("click", () => {
         const industry = btn.dataset.industry;
-        state.selectedIndustry =
-          state.selectedIndustry === industry ? "" : industry;
+        const nextIndustry = state.selectedIndustry === industry ? "" : industry;
+        state.selectedIndustry = nextIndustry;
         renderChips();
+
+        // Selecting any industry auto-selects the Compliance bundle plan.
+        if (nextIndustry) {
+          state.selectedPlan = "bundle";
+          applySelectedPlanSideEffects("bundle");
+          checkShowCalculation();
+          renderPlans();
+          renderAddons();
+          updateTotal();
+        }
       });
     });
 
@@ -842,10 +852,12 @@
 
     els.addonsList.innerHTML = state.addons
       .map((addon) => {
-        const isBundleForced =
-          state.selectedPlan === "bundle" && addon.slug === "accounting";
+        const isComplianceBundle = state.selectedPlan === "bundle";
+        const isBundleForced = isComplianceBundle && addon.slug === "accounting";
         const checked = isBundleForced || state.selectedAddOns.has(addon.slug);
-        const disabled = state.selectedPlan === "free" || isBundleForced;
+        // Compliance bundle: add-ons are pre-selected and cannot be changed.
+        const disabled = state.selectedPlan === "free" || isComplianceBundle;
+        const isLocked = isComplianceBundle && !addon.comingSoon;
         const monthlyPrice = addon.monthly ? addon.monthly.price : 0;
         const displayPrice = getAddonPrice(addon.slug);
         const isAnnual = state.billing === "annual";
@@ -867,11 +879,11 @@
 
         return `
         <div
-          class="addon-card${checked ? " selected" : ""}${addon.comingSoon ? " coming-soon" : ""}${disabled && !checked ? " disabled" : ""}"
+          class="addon-card${checked ? " selected" : ""}${addon.comingSoon ? " coming-soon" : ""}${isLocked ? " locked" : ""}${disabled && !checked ? " disabled" : ""}"
           data-addon="${addon.slug}"
           role="checkbox"
           aria-checked="${checked}"
-          tabindex="0"
+          tabindex="${addon.comingSoon || disabled ? "-1" : "0"}"
           ${addon.comingSoon || disabled ? 'aria-disabled="true"' : ""}
           ${disabled && !checked ? 'style="opacity:0.6; cursor:not-allowed;"' : ""}
         >
@@ -899,12 +911,10 @@
       .join("");
 
     els.addonsList
-      .querySelectorAll(".addon-card:not(.coming-soon)")
+      .querySelectorAll('.addon-card:not(.coming-soon):not([aria-disabled="true"])')
       .forEach((card) => {
         const activate = () => {
-          if (state.selectedPlan === "free") return;
           const slug = card.dataset.addon;
-          if (state.selectedPlan === "bundle" && slug === "accounting") return;
 
           if (state.selectedAddOns.has(slug)) {
             state.selectedAddOns.delete(slug);
@@ -973,6 +983,8 @@
       infoText.textContent =
         state.selectedPlan === "free"
           ? "Add-ons are available on paid plans"
+          : state.selectedPlan === "bundle"
+            ? "Add-ons are included in this bundle"
           : "Select add-ons";
     }
   }

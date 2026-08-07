@@ -597,20 +597,32 @@
     return addon.monthly ? addon.monthly.price : 0;
   }
 
+  // How many non-accounting add-ons are included free in the current plan
+  function getFreeAddonCount() {
+    if (state.selectedPlan === "bundle") return 2;
+    if (state.selectedPlan === "advanced") return 5;
+    if (state.selectedPlan === "pro") return Infinity;
+    return 0;
+  }
+
   function getTotal() {
     const planPrice = state.selectedPlan ? getPlanPrice(state.selectedPlan) : 0;
     if (state.selectedPlan === "free" || !state.selectedPlan)
       return (0).toFixed(2);
 
     let total = planPrice;
-    if (state.selectedPlan === "bundle") {
+    const freeAddonCount = getFreeAddonCount();
+    if (freeAddonCount > 0) {
+      // bundle / advanced / pro: accounting is always included; first freeAddonCount other add-ons are included
       const extras = [...state.selectedAddOns].filter(
         (s) => s !== "accounting",
       );
-      const paidExtras = Math.max(0, extras.length - 2);
-      const sampleAddon = state.addons.find((a) => a.slug !== "accounting");
-      const addonUnit = sampleAddon ? getAddonPrice(sampleAddon.slug) : 4.99;
-      total += paidExtras * addonUnit;
+      const paidExtras = Math.max(0, extras.length - freeAddonCount);
+      if (paidExtras > 0) {
+        const sampleAddon = state.addons.find((a) => a.slug !== "accounting");
+        const addonUnit = sampleAddon ? getAddonPrice(sampleAddon.slug) : 4.99;
+        total += paidExtras * addonUnit;
+      }
     } else {
       total += [...state.selectedAddOns].reduce(
         (acc, slug) => acc + getAddonPrice(slug),
@@ -735,12 +747,21 @@
       return;
     }
     if (planSlug === "bundle") {
+      // Bundle includes accounting + 2 free add-ons — pre-select only 2 non-accounting
+      // so the auto-upgrade to advanced doesn't fire immediately
+      const available = state.addons
+        .filter((a) => a.slug !== "accounting" && !a.comingSoon)
+        .map((a) => a.slug);
       state.selectedAddOns.clear();
-      state.addons.forEach((a) => {
-        if (a.slug !== "accounting" && !a.comingSoon) {
-          state.selectedAddOns.add(a.slug);
-        }
-      });
+      available.slice(0, 2).forEach((slug) => state.selectedAddOns.add(slug));
+      return;
+    }
+    if (planSlug === "advanced" || planSlug === "pro") {
+      // Advanced and Pro include all add-ons
+      state.selectedAddOns.clear();
+      state.addons
+        .filter((a) => !a.comingSoon)
+        .forEach((a) => state.selectedAddOns.add(a.slug));
       return;
     }
     state.selectedAddOns.clear();
@@ -776,14 +797,16 @@
         const features = pkg.features || { includes: [], excludes: [] };
         const includes = features.includes || [];
         const excludes = features.excludes || [];
+        const isComingSoon = !!pkg.comingSoon;
 
         return `
         <div
-          class="plan-card${selected ? " selected" : ""}"
+          class="plan-card${selected ? " selected" : ""}${isComingSoon ? " coming-soon" : ""}"
           data-plan="${pkg.slug}"
           role="radio"
           aria-checked="${selected}"
-          tabindex="0"
+          tabindex="${isComingSoon ? "-1" : "0"}"
+          ${isComingSoon ? 'aria-disabled="true" style="opacity:0.5; cursor:not-allowed;"' : ""}
         >
           <div>
             <div class="plan-card-top">
@@ -824,7 +847,7 @@
       })
       .join("");
 
-    els.plansGrid.querySelectorAll(".plan-card").forEach((card) => {
+    els.plansGrid.querySelectorAll(".plan-card:not(.coming-soon)").forEach((card) => {
       const activate = () => {
         const newPlan = card.dataset.plan;
         if (state.selectedPlan !== newPlan) {
@@ -850,32 +873,50 @@
   function renderAddons() {
     if (!state.addons.length) return;
 
+    const isBundlePlan = state.selectedPlan === "bundle";
+    const isAdvancedPlan = state.selectedPlan === "advanced";
+    const isProPlan = state.selectedPlan === "pro";
+    const isBundleFamily = isBundlePlan || isAdvancedPlan || isProPlan;
+    const freeAddonCount = getFreeAddonCount();
+
     els.addonsList.innerHTML = state.addons
       .map((addon) => {
-        const isComplianceBundle = state.selectedPlan === "bundle";
-        const isBundleForced = isComplianceBundle && addon.slug === "accounting";
+        // Accounting is always force-included for bundle/advanced/pro
+        const isBundleForced = isBundleFamily && addon.slug === "accounting";
         const checked = isBundleForced || state.selectedAddOns.has(addon.slug);
-        // Compliance bundle: add-ons are pre-selected and cannot be changed.
-        const disabled = state.selectedPlan === "free" || isComplianceBundle;
-        const isLocked = isComplianceBundle && !addon.comingSoon;
+        // Only accounting is locked for bundle/advanced/pro; other add-ons are toggleable
+        const disabled = state.selectedPlan === "free" || isBundleForced;
+        const isLocked = isBundleForced;
         const monthlyPrice = addon.monthly ? addon.monthly.price : 0;
         const displayPrice = getAddonPrice(addon.slug);
         const isAnnual = state.billing === "annual";
 
-        let priceHtml = "";
-        if (
+        // Determine if this non-accounting add-on is within the free quota
+        const nonAccountingSelected = [...state.selectedAddOns].filter(
+          (s) => s !== "accounting",
+        );
+        const addonIndexInSelected = nonAccountingSelected.indexOf(addon.slug);
+        const isIncludedFree =
           isBundleForced ||
-          (state.selectedPlan === "bundle" &&
+          (isBundleFamily &&
             checked &&
-            [...state.selectedAddOns]
-              .filter((s) => s !== "accounting")
-              .indexOf(addon.slug) < 2)
-        ) {
+            addon.slug !== "accounting" &&
+            (isProPlan || addonIndexInSelected < freeAddonCount));
+
+        let priceHtml = "";
+        if (isIncludedFree) {
           priceHtml =
             '<p class="addon-new-price" style="color:#059669;font-size:13px;">Included</p>';
         } else {
           priceHtml = `<p class="addon-new-price">$${fmt(displayPrice)}<span class="per-month">/mo</span></p>`;
         }
+
+        const tabIndex = addon.comingSoon || disabled ? "-1" : "0";
+        const ariaDisabled = addon.comingSoon || disabled ? 'aria-disabled="true"' : "";
+        const styleAttr =
+          (disabled && !checked) || addon.comingSoon
+            ? 'style="opacity:0.6; cursor:not-allowed;"'
+            : "";
 
         return `
         <div
@@ -883,9 +924,9 @@
           data-addon="${addon.slug}"
           role="checkbox"
           aria-checked="${checked}"
-          tabindex="${addon.comingSoon || disabled ? "-1" : "0"}"
-          ${addon.comingSoon || disabled ? 'aria-disabled="true"' : ""}
-          ${disabled && !checked ? 'style="opacity:0.6; cursor:not-allowed;"' : ""}
+          tabindex="${tabIndex}"
+          ${ariaDisabled}
+          ${styleAttr}
         >
           <input
             type="checkbox"
@@ -911,9 +952,10 @@
       .join("");
 
     els.addonsList
-      .querySelectorAll('.addon-card:not(.coming-soon):not([aria-disabled="true"])')
+      .querySelectorAll(".addon-card:not(.coming-soon):not(.locked)")
       .forEach((card) => {
         const activate = () => {
+          if (state.selectedPlan === "free") return;
           const slug = card.dataset.addon;
 
           if (state.selectedAddOns.has(slug)) {
@@ -922,19 +964,27 @@
             state.selectedAddOns.add(slug);
           }
 
-          if (
-            state.selectedPlan &&
-            state.selectedPlan !== "bundle" &&
-            state.selectedPlan !== "free"
+          // Auto-upgrade logic (mirrors PricingModal.js)
+          const currentPlan = state.selectedPlan;
+          const hasAccounting = state.selectedAddOns.has("accounting");
+          const others = [...state.selectedAddOns].filter(
+            (s) => s !== "accounting",
+          );
+
+          if (currentPlan === "bundle" && others.length >= 5) {
+            // bundle → advanced when 5+ non-accounting add-ons selected
+            state.selectedPlan = "advanced";
+          } else if (
+            currentPlan !== "bundle" &&
+            currentPlan !== "advanced" &&
+            currentPlan !== "pro" &&
+            currentPlan !== "free" &&
+            hasAccounting &&
+            others.length >= 2
           ) {
-            const hasAccounting = state.selectedAddOns.has("accounting");
-            const others = [...state.selectedAddOns].filter(
-              (s) => s !== "accounting",
-            );
-            if (hasAccounting && others.length >= 2) {
-              state.selectedPlan = "bundle";
-              state.selectedAddOns.delete("accounting");
-            }
+            // business → bundle when accounting + 2 other add-ons
+            state.selectedPlan = "bundle";
+            state.selectedAddOns.delete("accounting");
           }
 
           checkShowCalculation();

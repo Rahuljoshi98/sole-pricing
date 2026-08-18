@@ -7,8 +7,8 @@
   "use strict";
 
   /* ---- Config ---- */
-  const API_BASE = "https://mignode.soleapp.com.au/api";
-  const SIGNUP_URL = "https://webapp.soleapp.com.au/login";
+  const API_BASE = "https://mignode.getsole.ai/api";
+  const SIGNUP_URL = "https://webapp.getsole.ai/login";
 
   /* ---- Static data ---- */
   const tradeIndustryLabels = new Set([
